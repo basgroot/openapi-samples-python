@@ -35,7 +35,7 @@ This repository is broken down by **subject**, each of which includes sample cod
 1. [Authentication (OAuth)](/authentication/oauth)
 2. [Authentication (Certificate-based)](/authentication/cba)
 3. Basic Client Information
-3. Querying the Insturment Universe
+3. Querying the Instrument Universe
 4. Client Portfolio Details
 5. Placing Orders
 6. Managing Orders/Positions
