@@ -1,5 +1,5 @@
-# requires Python 3.6+
-# make sure to pip install requests and flask before running this file
+# tested in Python 3.6+
+# required packages: flask, requests
 
 import threading, secrets, webbrowser, requests, urllib, base64, hashlib
 
@@ -15,7 +15,7 @@ app = Flask(__name__)
 
 # copy your app configuration from https://www.developer.saxo/openapi/appmanagement
 # make sure the redirect does NOT include a port (which is typical for PKCE flow)
-conf = {
+app_conf = {
   "AppName": "Your app name",
   "AppKey": "Your app key",
   "AuthorizationEndpoint": "https://sim.logonvalidation.net/authorize",
@@ -30,7 +30,9 @@ conf = {
 # generate 10-character string as state
 state = secrets.token_urlsafe(10)
 port = str(randint(1000, 9999))  # randomly picked redirect URI port
-r_url = urlparse(conf['RedirectUrls'][0])
+
+# construct redirect url with random port number
+r_url = urlparse(app_conf['RedirectUrls'][0])
 ad_hoc_redirect = r_url.scheme + '://' + r_url.netloc + ':' + port + r_url.path
 
 
@@ -63,9 +65,9 @@ class ServerThread(threading.Thread):
     The server is automatically configured on the host and port specified in the configuarion dictionary.
     '''
 
-    def __init__(self, app, port):
+    def __init__(self, app, redirect_url, port):
         threading.Thread.__init__(self)
-        host = r_url.hostname
+        host = redirect_url.hostname
         port = port
         self.server = make_server(host, port, app)
         self.ctx = app.app_context()
@@ -101,20 +103,20 @@ verifier = code_verifier()
 
 params = {
     'response_type': 'code',
-    'client_id': conf['AppKey'],
+    'client_id': app_conf['AppKey'],
     'state': state,
     'redirect_uri': ad_hoc_redirect,
     'code_challenge': code_challenge(verifier),
     'code_challenge_method': 'S256'
 }
 
-auth_url = requests.Request('GET', url=conf['AuthorizationEndpoint'], params=params).prepare()
+auth_url = requests.Request('GET', url=app_conf['AuthorizationEndpoint'], params=params).prepare()
 
 print('Opening browser and loading authorization URL...')
 received_callback = False
 webbrowser.open_new(auth_url.url)
 
-server = ServerThread(app, port)
+server = ServerThread(app, r_url, port)
 server.start()
 while not received_callback:
     try:
@@ -141,11 +143,11 @@ params = {
     'grant_type': 'authorization_code',
     'code': code,
     'redirect_uri': ad_hoc_redirect,
-    'client_id': conf['AppKey'],
+    'client_id': app_conf['AppKey'],
     'code_verifier': verifier
 }
         
-r = requests.post(conf['TokenEndpoint'], params=params)
+r = requests.post(app_conf['TokenEndpoint'], params=params)
 
 if r.status_code != 201:
     print('Error occurred while retrieving token. Terinating.')
@@ -163,7 +165,7 @@ headers = {
     'Authorization': f"Bearer {token_data['access_token']}"
 }
 
-r = requests.get(conf['OpenApiBaseUrl'] + 'port/v1/users/me', headers=headers)
+r = requests.get(app_conf['OpenApiBaseUrl'] + 'port/v1/users/me', headers=headers)
 
 if r.status_code != 200:
     print('Error occurred querying user data from the OpenAPI. Terminating.')
@@ -181,7 +183,7 @@ params = {
     'code_verifier': verifier,
 }
         
-r = requests.post(conf['TokenEndpoint'], params=params)
+r = requests.post(app_conf['TokenEndpoint'], params=params)
 
 if r.status_code != 201:
     print('Error occurred while retrieving token. Terinating.')
