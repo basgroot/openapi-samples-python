@@ -1,5 +1,5 @@
-# requires Python 3.6+
-# make sure to pip install requests and flask before running this file
+# tested in Python 3.6+
+# required packages: flask, requests
 
 import threading, secrets, webbrowser, requests, urllib
 
@@ -13,7 +13,7 @@ from werkzeug.serving import make_server
 app = Flask(__name__)
 
 # copy your app configuration from https://www.developer.saxo/openapi/appmanagement
-conf = {
+app_conf = {
   "AppName": "Your app name",
   "AppKey": "Your app key",
   "AuthorizationEndpoint": "https://sim.logonvalidation.net/authorize",
@@ -61,8 +61,8 @@ class ServerThread(threading.Thread):
 
     def __init__(self, app):
         threading.Thread.__init__(self)
-        host = urlparse(conf['RedirectUrls'][0]).hostname
-        port = urlparse(conf['RedirectUrls'][0]).port
+        host = urlparse(app_conf['RedirectUrls'][0]).hostname
+        port = urlparse(app_conf['RedirectUrls'][0]).port
         self.server = make_server(host, port, app)
         self.ctx = app.app_context()
         self.ctx.push()
@@ -78,13 +78,13 @@ class ServerThread(threading.Thread):
 
 params = {
     'response_type': 'code',
-    'client_id': conf['AppKey'],
+    'client_id': app_conf['AppKey'],
     'state': state,
-    'redirect_uri': conf['RedirectUrls'][0],
-    'client_secret': conf['AppSecret']
+    'redirect_uri': app_conf['RedirectUrls'][0],
+    'client_secret': app_conf['AppSecret']
 }
 
-auth_url = requests.Request('GET', url=conf['AuthorizationEndpoint'], params=params).prepare()
+auth_url = requests.Request('GET', url=app_conf['AuthorizationEndpoint'], params=params).prepare()
 
 print('Opening browser and loading authorization URL...')
 received_callback = False
@@ -116,12 +116,12 @@ print('Authentication successful. Requesting token...')
 params = {
     'grant_type': 'authorization_code',
     'code': code,
-    'redirect_uri': conf['RedirectUrls'][0],
-    'client_id': conf['AppKey'],
-    'client_secret': conf['AppSecret']
+    'redirect_uri': app_conf['RedirectUrls'][0],
+    'client_id': app_conf['AppKey'],
+    'client_secret': app_conf['AppSecret']
 }
         
-r = requests.post(conf['TokenEndpoint'], params=params)
+r = requests.post(app_conf['TokenEndpoint'], params=params)
 
 if r.status_code != 201:
     print('Error occurred while retrieving token. Terinating.')
@@ -139,7 +139,7 @@ headers = {
     'Authorization': f"Bearer {token_data['access_token']}"
 }
 
-r = requests.get(conf['OpenApiBaseUrl'] + 'port/v1/users/me', headers=headers)
+r = requests.get(app_conf['OpenApiBaseUrl'] + 'port/v1/users/me', headers=headers)
 
 if r.status_code != 200:
     print('Error occurred querying user data from the OpenAPI. Terminating.')
@@ -154,12 +154,12 @@ print('Using refresh token to obtain new token data...')
 params = {
     'grant_type': 'refresh_token',
     'refresh_token': token_data['refresh_token'],
-    'redirect_uri': conf['RedirectUrls'][0],
-    'client_id': conf['AppKey'],
-    'client_secret': conf['AppSecret']
+    'redirect_uri': app_conf['RedirectUrls'][0],
+    'client_id': app_conf['AppKey'],
+    'client_secret': app_conf['AppSecret']
 }
         
-r = requests.post(conf['TokenEndpoint'], params=params)
+r = requests.post(app_conf['TokenEndpoint'], params=params)
 
 if r.status_code != 201:
     print('Error occurred while retrieving token. Terinating.')
