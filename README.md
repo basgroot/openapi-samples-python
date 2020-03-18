@@ -1,6 +1,6 @@
 # Saxo OpenAPI Python Samples
 
-![Python](https://img.shields.io/badge/language-python-blue.svg)
+![Python](https://img.shields.io/badge/language-Python%203.6%2B-blue)
 
 This repository contains sample code for developers working with [Saxo's OpenAPI](https://www.home.saxo/platforms/api) using Python.
 
