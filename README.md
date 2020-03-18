@@ -13,6 +13,19 @@ To get started, make sure you:
 
 > Note: step `3` and `4` require a developer account.
 
+## Requirements
+
+All samples in this repository have been tested in Python versions 3.6 and up. Check the individual `.py` files for required packages. For example:
+
+```Python
+# tested in Python 3.6+
+# required packages: flask, requests
+```
+
+Every sample requires either app configuration (obtained through [Application Management](https://www.developer.saxo/openapi/appmanagement)) or a 24-hour access token copied directly into the code. These variables will always be named `app_config` or `token`.
+
+> In case you are facing issues such as `401 Unauthorized` or `Application key not registered`, check if you copied the required input correctly.
+
 ## Content
 
 This repository is broken down by **subject**, each of which includes sample code in multiple languages.
