@@ -28,12 +28,12 @@ Every sample requires either app configuration (obtained through [Application Ma
 
 ## Content
 
-This repository is broken down by **subject**, each of which includes sample code in multiple languages.
+This repository is broken down by subject, each of which includes sample code in multiple languages.
 
 **Table of contents:**
 
-1. [Authentication (OAuth)](/authentication/oauth)
-2. [Authentication (Certificate-based)](/authentication/cba)
+1. Authentication OAuth
+2. Authentication Certificate-based
 3. Basic Client Information
 3. Querying the Instrument Universe
 4. Client Portfolio Details
