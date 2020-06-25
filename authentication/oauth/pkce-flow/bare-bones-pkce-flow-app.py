@@ -36,7 +36,7 @@ r_url = urlparse(app_conf['RedirectUrls'][0])
 ad_hoc_redirect = r_url.scheme + '://' + r_url.netloc + ':' + port + r_url.path
 
 
-@app.route('/callback')
+@app.route(r_url.path)
 def handle_callback():
     '''
     Saxo SSO will redirect to this endpoint after the user authenticates.
@@ -116,7 +116,7 @@ print('Opening browser and loading authorization URL...')
 received_callback = False
 webbrowser.open_new(auth_url.url)
 
-server = ServerThread(app, r_url, port)
+server = ServerThread(app, urlparse(ad_hoc_redirect), port)
 server.start()
 while not received_callback:
     try:
@@ -149,6 +149,8 @@ params = {
         
 r = requests.post(app_conf['TokenEndpoint'], params=params)
 
+print(r.url)
+
 if r.status_code != 201:
     print('Error occurred while retrieving token. Terinating.')
     exit(-1)
@@ -167,6 +169,8 @@ headers = {
 
 r = requests.get(app_conf['OpenApiBaseUrl'] + 'port/v1/users/me', headers=headers)
 
+print(r.url)
+
 if r.status_code != 200:
     print('Error occurred querying user data from the OpenAPI. Terminating.')
 
@@ -184,6 +188,8 @@ params = {
 }
         
 r = requests.post(app_conf['TokenEndpoint'], params=params)
+
+print(r.url)
 
 if r.status_code != 201:
     print('Error occurred while retrieving token. Terinating.')
