@@ -1,7 +1,12 @@
 # tested in Python 3.6+
 # required packages: flask, requests
 
-import threading, secrets, webbrowser, requests, urllib, base64, hashlib
+import threading
+import secrets
+import webbrowser
+import requests
+import base64
+import hashlib
 
 from time import sleep
 
@@ -13,8 +18,8 @@ from werkzeug.serving import make_server
 
 app = Flask(__name__)
 
-# copy your app configuration from https://www.developer.saxo/openapi/appmanagement
-# make sure the redirect does NOT include a port (which is typical for PKCE flow)
+# copy app configuration from https://www.developer.saxo/openapi/appmanagement
+# make sure the redirect does NOT include a port (typical for PKCE flow)
 app_config = {
     "AppName": "Your app name",
     "AppKey": "Your app key",
@@ -45,14 +50,16 @@ def handle_callback():
     error_message = None
     code = None
 
-    if "error" in request.args:
-        error_message = request.args["error"] + ": " + request.args["error_description"]
-        render_text = "Error occurred. Please check the application command line."
+    r = request
+
+    if "error" in r.args:
+        error_message = r.args["error"] + ": " + r.args["error_description"]
+        render_text = "Error occurred. Check the application command line."
     else:
-        code = request.args["code"]
+        code = r.args["code"]
         render_text = "Please return to the application."
 
-    received_state = request.args["state"]
+    received_state = r.args["state"]
     received_callback = True
 
     return render_text
@@ -60,8 +67,8 @@ def handle_callback():
 
 class ServerThread(threading.Thread):
     """
-    The Flask server will run inside a thread so it can be shut down when the callback is received.
-    The server is automatically configured on the host and port specified in the app configuarion dictionary.
+    The Flask server will run inside a thread so it can be shut down.
+    Host and port are taken from app config.
     """
 
     def __init__(self, app, redirect_url, port):
@@ -120,22 +127,20 @@ print("Opening browser and loading authorization URL...")
 received_callback = False
 webbrowser.open_new(auth_url.url)
 
-# after authentication in the browser, Saxo SSO will redirect to localhost server.
+# after authentication in the browser, Saxo SSO will redirect to localhost.
 server = ServerThread(app, urlparse(ad_hoc_redirect), port)
 server.start()
 while not received_callback:
     try:
         sleep(0.1)
-    except KeyboardInterrupt as e:
+    except KeyboardInterrupt:
         print("Caught keyboard interrupt. Shutting down.")
         server.shutdown()
         exit(-1)
 server.shutdown()
 
 if state != received_state:
-    print(
-        "Received state does not match original state. Authentication possible compromised."
-    )
+    print("Received state does not match original state.")
     exit(-1)
 
 if error_message:
