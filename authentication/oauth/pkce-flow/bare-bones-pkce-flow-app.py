@@ -15,7 +15,7 @@ app = Flask(__name__)
 
 # copy your app configuration from https://www.developer.saxo/openapi/appmanagement
 # make sure the redirect does NOT include a port (which is typical for PKCE flow)
-app_conf = {
+app_config = {
     "AppName": "Your app name",
     "AppKey": "Your app key",
     "AuthorizationEndpoint": "https://sim.logonvalidation.net/authorize",
@@ -31,7 +31,7 @@ port = str(randint(1000, 9999))  # randomly picked redirect URI port
 
 # construct redirect url with random port number
 # takes the first redirect url from the "RedirectUrls" array by default
-r_url = urlparse(app_conf["RedirectUrls"][0])
+r_url = urlparse(app_config["RedirectUrls"][0])
 ad_hoc_redirect = r_url.scheme + "://" + r_url.netloc + ":" + port + r_url.path
 
 
@@ -104,7 +104,7 @@ challenge = code_challenge(verifier)
 
 params = {
     "response_type": "code",
-    "client_id": app_conf["AppKey"],
+    "client_id": app_config["AppKey"],
     "state": state,
     "redirect_uri": ad_hoc_redirect,
     "code_challenge": challenge,
@@ -112,7 +112,7 @@ params = {
 }
 
 auth_url = requests.Request(
-    "GET", url=app_conf["AuthorizationEndpoint"], params=params
+    "GET", url=app_config["AuthorizationEndpoint"], params=params
 ).prepare()
 
 print("Opening browser and loading authorization URL...")
@@ -150,11 +150,11 @@ params = {
     "grant_type": "authorization_code",
     "code": code,
     "redirect_uri": ad_hoc_redirect,
-    "client_id": app_conf["AppKey"],
+    "client_id": app_config["AppKey"],
     "code_verifier": verifier,
 }
 
-r = requests.post(app_conf["TokenEndpoint"], params=params)
+r = requests.post(app_config["TokenEndpoint"], params=params)
 
 print(r.url)
 
@@ -172,7 +172,7 @@ print("Requesting user data from OpenAPI...")
 
 headers = {"Authorization": f"Bearer {token_data['access_token']}"}
 
-r = requests.get(app_conf["OpenApiBaseUrl"] + "port/v1/users/me", headers=headers)
+r = requests.get(app_config["OpenApiBaseUrl"] + "port/v1/users/me", headers=headers)
 
 print(r.url)
 
@@ -192,7 +192,7 @@ params = {
     "code_verifier": verifier,
 }
 
-r = requests.post(app_conf["TokenEndpoint"], params=params)
+r = requests.post(app_config["TokenEndpoint"], params=params)
 
 print(r.url)
 
