@@ -17,14 +17,13 @@ app = Flask(__name__)
 
 # copy your app configuration from https://www.developer.saxo/openapi/appmanagement
 app_config = {
-    "AppName": "Your app name",
-    "AppKey": "Your app key",
+    "AppKey": "Your app name",
     "AuthorizationEndpoint": "https://sim.logonvalidation.net/authorize",
     "TokenEndpoint": "https://sim.logonvalidation.net/token",
     "GrantType": "Code",
     "OpenApiBaseUrl": "https://gateway.saxobank.com/sim/openapi/",
-    "RedirectUrls": ["http://your:5000/redirect"],
-    "AppSecret": "Your app secret",
+    "RedirectUrls": ["http://localhost:5000/redirect"],
+    "AppSecret": "Your app secret"
 }
 
 # generate 10-character string as state
