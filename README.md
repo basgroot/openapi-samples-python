@@ -26,18 +26,3 @@ Every sample requires either app configuration (obtained through [Application Ma
 
 > In case you are facing issues such as `401 Unauthorized` or `Application key not registered`, check if you copied the required input correctly.
 
-## Content
-
-This repository is broken down by subject, each of which includes sample code in multiple languages.
-
-**Table of contents:**
-
-1. Authentication OAuth
-2. Authentication Certificate-based
-3. Basic Client Information
-3. Querying the Instrument Universe
-4. Client Portfolio Details
-5. Placing Orders
-6. Managing Orders/Positions
-7. WebSocket Streaming
-
