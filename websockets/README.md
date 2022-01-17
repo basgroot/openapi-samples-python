@@ -12,27 +12,29 @@ The samples write all data to the terminal. To complete this flow, delta updates
 Successfully created subscription
 Snapshot data:
 {'Data': [{'AssetType': 'FxSpot',
-           'LastUpdated': '2020-03-19T12:31:57.787000Z',
+           'LastUpdated': '2022-01-17T12:11:25.698000Z',
+           'PriceSource': 'SBFX',
            'Quote': {'Amount': 100000,
-                     'Ask': 1.07371,
-                     'Bid': 1.0737,
+                     'Ask': 1.14145,
+                     'Bid': 1.14125,
                      'DelayedByMinutes': 0,
                      'ErrorCode': 'None',
-                     'Mid': 1.073705,
+                     'MarketState': 'Open',
+                     'Mid': 1.14135,
                      'PriceSource': 'SBFX',
                      'PriceSourceType': 'Firm',
                      'PriceTypeAsk': 'Tradable',
                      'PriceTypeBid': 'Tradable'},
            'Uic': 21}]}
 Now receiving delta updates:
-[{'LastUpdated': '2020-03-19T12:31:58.841000Z',
-  'Quote': {'Ask': 1.07373, 'Bid': 1.07371, 'Mid': 1.07372},
+[{'LastUpdated': '2022-01-17T12:11:29.620000Z',
+  'Quote': {'Ask': 1.14146, 'Bid': 1.14126, 'Mid': 1.14136},
   'Uic': 21}]
-[{'LastUpdated': '2020-03-19T12:32:00.047000Z',
-  'Quote': {'Ask': 1.07374, 'Mid': 1.073725},
+[{'LastUpdated': '2022-01-17T12:11:35.354000Z',
+  'Quote': {'Ask': 1.14151, 'Bid': 1.14131, 'Mid': 1.14141},
   'Uic': 21}]
-[{'LastUpdated': '2020-03-19T12:32:01.073000Z',
-  'Quote': {'Ask': 1.07356, 'Bid': 1.07355, 'Mid': 1.073555},
+[{'LastUpdated': '2022-01-17T12:11:36.257000Z',
+  'Quote': {'Ask': 1.14154, 'Bid': 1.14134, 'Mid': 1.14144},
   'Uic': 21}]
 User interrupted the interpreter - closing connection.
 ```

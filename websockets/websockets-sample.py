@@ -1,11 +1,11 @@
 # tested in Python 3.6+
 # required packages: websockets, requests
 
-import websockets, asyncio, requests, secrets, string, json
+import websockets, asyncio, requests, secrets, json
 from pprint import pprint
 
 # copy your (24-hour) token here
-TOKEN = 
+TOKEN = ""
 
 # create a random string for context ID and reference ID
 CONTEXT_ID = secrets.token_urlsafe(10)
@@ -55,8 +55,20 @@ async def streamer(context_id, ref_id, token):
             pprint(decode_message(message))
 
 
-if __name__ == "__main__":
+# Only one app is entitled to receive realtime prices. This is handled via the primary session.
+# More info on keeping the status: https://saxobank.github.io/openapi-samples-js/websockets/primary-monitoring/
+def take_primary_session():
+    requests.put(
+        'https://gateway.saxobank.com/sim/openapi/root/v1/sessions/capabilities',
+        headers={'Authorization': 'Bearer ' + TOKEN},
+        json={
+            'TradeLevel': 'FullTradingAndChat'
+        }
+    )
 
+
+if __name__ == "__main__":
+    take_primary_session()
     try:
         create_subscription(CONTEXT_ID, REF_ID, TOKEN)
         asyncio.get_event_loop().run_until_complete(streamer(CONTEXT_ID, REF_ID, TOKEN))

@@ -1,11 +1,11 @@
 # tested in Python 3.6+
 # required packages: websocket-client, requests
 
-import websocket, requests, secrets, string, json
+import websocket, requests, secrets, json
 from pprint import pprint
 
 # copy your (24-hour) token here
-TOKEN = 
+TOKEN = ""
 
 # create a random string for context ID and reference ID
 CONTEXT_ID = secrets.token_urlsafe(10)
@@ -79,11 +79,25 @@ def on_close(ws):
     print('### websocket closed ###')
 
 
+# Only one app is entitled to receive realtime prices. This is handled via the primary session.
+# More info on keeping the status: https://saxobank.github.io/openapi-samples-js/websockets/primary-monitoring/
+def take_primary_session():
+    requests.put(
+        'https://gateway.saxobank.com/sim/openapi/root/v1/sessions/capabilities',
+        headers={'Authorization': 'Bearer ' + TOKEN},
+        json={
+            'TradeLevel': 'FullTradingAndChat'
+        }
+    )
+
+
 if __name__ == "__main__":
 
     print(f'Context ID for this session: {CONTEXT_ID}')
-    print(f'Reference ID of EURUSD price subscription: {REF_ID}')
+    print(f'Reference ID of price subscription: {REF_ID}')
     
+    take_primary_session()
+
     # uncomment the below line to enable debugging output from websocket module
     #websocket.enableTrace(True)
     ws = websocket.WebSocketApp(
