@@ -83,7 +83,7 @@ class RedirectServer(threading.Thread):
         self.ctx.push()
 
     def run(self) -> None:
-        logging.debug("starting server and listen for callback from Saxo...")
+        logging.debug("starting server and listening for callback from Saxo...")
         self.server.serve_forever()
 
     def shutdown(self) -> None:
