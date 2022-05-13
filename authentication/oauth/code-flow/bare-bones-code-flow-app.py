@@ -1,38 +1,52 @@
-# tested in Python 3.6+
-# required packages: flask, requests
+# tested in Python 3.10
+# required packages: flask, requests (see requirements.txt)
+# formatted using black, flake8
 
 import threading
 import secrets
 import webbrowser
 import requests
+import logging
 
 from time import sleep
 
 from urllib.parse import urlparse
-from pprint import pprint
 from flask import Flask, request
 from werkzeug.serving import make_server
+
+
+# reduce logger level to remove debug messages from console output
+logging.basicConfig(
+    format="%(asctime)s | %(levelname)s | %(message)s", level=logging.DEBUG
+)
+logging.getLogger()
 
 app = Flask(__name__)
 
 # copy your app configuration from https://www.developer.saxo/openapi/appmanagement
+# using the "Copy App Object" link on the top-right of the app page
 app_config = {
-    "AppKey": "Your app name",
-    "AuthorizationEndpoint": "https://sim.logonvalidation.net/authorize",
-    "TokenEndpoint": "https://sim.logonvalidation.net/token",
-    "GrantType": "Code",
-    "OpenApiBaseUrl": "https://gateway.saxobank.com/sim/openapi/",
-    "RedirectUrls": ["http://localhost:5000/redirect"],
-    "AppSecret": "Your app secret"
+    "AppName": ...,
+    "AppKey": ...,
+    "AuthorizationEndpoint": ...,
+    "TokenEndpoint": ...,
+    "GrantType": ...,
+    "OpenApiBaseUrl": ...,
+    "RedirectUrls": [...],
+    "AppSecret": ...,
 }
 
-# generate 10-character string as state
+if app_config["AppName"] is ...:
+    logging.error("looks like no app config data was pasted in - shutting down...")
+    exit(-1)
+
+# generate random 10-character string as state
 state = secrets.token_urlsafe(10)
 
-# parse redirect
+# parse redirect object (assuming first redirect url is localhost)
 r_url = urlparse(app_config["RedirectUrls"][0])
 
-
+# define server route that will handle the redirect callback
 @app.route(r_url.path)
 def handle_callback():
     """
@@ -48,7 +62,7 @@ def handle_callback():
         render_text = "Error occurred. Please check the application command line."
     else:
         code = request.args["code"]
-        render_text = "Please return to the application."
+        render_text = "Authentication succeeded! Please go back to the application."
 
     received_state = request.args["state"]
     received_callback = True
@@ -58,7 +72,7 @@ def handle_callback():
 
 class ServerThread(threading.Thread):
     """
-    The Flask server will run inside a thread.
+    The Flask server runs inside a thread, and will be terminated when the callback is received.
     """
 
     def __init__(self, app):
@@ -70,15 +84,15 @@ class ServerThread(threading.Thread):
         self.ctx.push()
 
     def run(self):
-        print("Starting server and listen for callback from Saxo...")
+        logging.debug("starting server and listen for callback from Saxo...")
         self.server.serve_forever()
 
     def shutdown(self):
-        print("Terminating server...")
+        logging.debug("terminating server...")
         self.server.shutdown()
 
 
-params = {
+auth_request_params = {
     "response_type": "code",
     "client_id": app_config["AppKey"],
     "state": state,
@@ -86,38 +100,45 @@ params = {
     "client_secret": app_config["AppSecret"],
 }
 
+# prepare the request so it is never actually sent (need the url for the browser to open)
 auth_url = requests.Request(
-    "GET", url=app_config["AuthorizationEndpoint"], params=params
+    "GET", url=app_config["AuthorizationEndpoint"], params=auth_request_params
 ).prepare()
 
-print("Opening browser and loading authorization URL...")
+# this variable will flip to 'True' when the Flask server receives a callback from Saxo SSO
 received_callback = False
+
+logging.debug("opening browser and loading authorization URL...")
 webbrowser.open_new(auth_url.url)
 
 server = ServerThread(app)
 server.start()
+
+# wait for login to be completed by the user, until then listen for redirect
 while not received_callback:
     try:
         sleep(1)
     except KeyboardInterrupt:
-        print("Caught keyboard interrupt. Shutting down...")
+        logging.warning("keyboard interrupt received - shutting down...")
         server.shutdown()
         exit(-1)
+
+logging.debug("received callback")
 server.shutdown()
 
 if state != received_state:
-    print("Received state does not match original state.")
+    logging.error("received state does not match original state.")
     exit(-1)
 
 if error_message:
-    print("Received error message. Authentication not successful.")
-    print(error_message)
+    logging.error("received error message - authentication not successful")
+    logging.error(error_message)
     exit(-1)
 
+logging.debug("authentication successful - requesting token...")
 
-print("Authentication successful. Requesting token...")
-
-params = {
+# use the application configuration data pasted above to formulate token request
+token_request_params = {
     "grant_type": "authorization_code",
     "code": code,
     "redirect_uri": app_config["RedirectUrls"][0],
@@ -125,35 +146,35 @@ params = {
     "client_secret": app_config["AppSecret"],
 }
 
-r = requests.post(app_config["TokenEndpoint"], params=params)
+r = requests.post(app_config["TokenEndpoint"], params=token_request_params)
 
 if r.status_code != 201:
-    print("Error occurred while retrieving token. Terinating.")
+    logging.error("error occurred while retrieving token - shutting down...")
     exit(-1)
 
-print("Received token data:")
 token_data = r.json()
 
-pprint(token_data)
+logging.debug(f"received token data: {token_data}")
 
-
-print("Requesting user data from OpenAPI...")
+logging.debug("requesting users/me from OpenAPI...")
 
 headers = {"Authorization": f"Bearer {token_data['access_token']}"}
 
 r = requests.get(app_config["OpenApiBaseUrl"] + "port/v1/users/me", headers=headers)
 
 if r.status_code != 200:
-    print("Error occurred querying user data from the OpenAPI. Terminating.")
+    logging.error(
+        "error occurred querying user data from the OpenAPI - shutting down..."
+    )
 
 user_data = r.json()
 
-pprint(user_data)
+logging.debug(f"sucessfully received user data: {user_data}")
 
+logging.debug("exercizing refresh token to obtain new token data...")
 
-print("Using refresh token to obtain new token data...")
-
-params = {
+# use the application configuration data pasted above to formulate refresh token request
+refresh_request_params = {
     "grant_type": "refresh_token",
     "refresh_token": token_data["refresh_token"],
     "redirect_uri": app_config["RedirectUrls"][0],
@@ -161,13 +182,15 @@ params = {
     "client_secret": app_config["AppSecret"],
 }
 
-r = requests.post(app_config["TokenEndpoint"], params=params)
+r = requests.post(app_config["TokenEndpoint"], params=refresh_request_params)
 
 if r.status_code != 201:
-    print("Error occurred while retrieving token. Terinating.")
+    logging.debug("error occurred while retrieving token - shutting down...")
     exit(-1)
 
-print("Received new token data:")
 token_data = r.json()
 
-pprint(token_data)
+logging.debug(f"sucessfully refreshed tokens: {token_data}")
+
+logging.debug("sample completed successfully - shutting down...")
+exit(0)
