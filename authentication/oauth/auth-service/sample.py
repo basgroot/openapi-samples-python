@@ -1,6 +1,6 @@
 import requests
 
-from saxo_auth_service import SaxoAuthService, parse_app_object
+from saxo_auth_service import SaxoAuthService, parse_app_config
 
 app_config = {
     "AppName": "Your application config data is pasted here...",
@@ -13,7 +13,7 @@ app_config = {
     "AppSecret": ...,
 }
 
-saxo_auth = SaxoAuthService(parse_app_object(app_config))
+saxo_auth = SaxoAuthService(parse_app_config(app_config))
 
 saxo_auth.login()
 

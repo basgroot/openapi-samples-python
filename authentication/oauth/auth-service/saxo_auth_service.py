@@ -239,6 +239,8 @@ class SaxoAuthService:
                         "code_verifier": self._auth_code_verifier,  # type: ignore[dict-item]
                     }
                 )
+
+        # by deafult, use refresh token
         if not auth_code:
             token_request_params.update(
                 {
@@ -271,5 +273,5 @@ class SaxoAuthService:
             raise RuntimeError("error occurred while attempting to retrieve token")
 
 
-def parse_app_object(app_object: dict) -> OpenAPIAppConfig:
-    return OpenAPIAppConfig.parse_obj(app_object)
+def parse_app_config(app_config_object: dict) -> OpenAPIAppConfig:
+    return OpenAPIAppConfig.parse_obj(app_config_object)

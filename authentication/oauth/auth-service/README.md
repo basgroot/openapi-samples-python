@@ -30,7 +30,7 @@ Once the app is created, click **Copy App Object** on the top right on the Appli
 Next, run the following code (make sure `saxo_auth_service.py` and `models.py` are available in your directory).
 
 ```Python
-from saxo_auth_service import SaxoAuthService, parse_app_object
+from saxo_auth_service import SaxoAuthService, parse_app_config
 
 app_config = {
     "AppName": "Your application config data is pasted here...",
@@ -43,7 +43,7 @@ app_config = {
     "AppSecret": ...,
 }
 
-saxo_auth = SaxoAuthService(parse_app_object(app_config))
+saxo_auth = SaxoAuthService(parse_app_config(app_config))
 ```
 
 You can now use the `saxo_auth` object to do the following three operations (see also `sample.py` for a runable script).
@@ -69,7 +69,7 @@ The following output will be shown in the terminal when the login flow is comple
 2022-05-13 21:20:48,649 | DEBUG | access & refresh token created/refreshed successfully
 ```
 
-`SaxoAuthService` is now authenticated and contains valid `access_token` property. This access token can be used for requests to Saxo OpenAPI.
+`SaxoAuthService` is now authenticated and contains a valid `access_token` property. This access token can be used for requests to Saxo OpenAPI.
 
 ``` Python
 print(saxo_auth.access_token)
