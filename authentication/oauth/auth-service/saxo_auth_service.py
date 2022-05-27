@@ -1,11 +1,13 @@
 import base64
 import hashlib
+import json
 import logging
+import os
 import secrets
 import webbrowser
 from random import randint
 from time import sleep
-from typing import List, Optional
+from typing import List
 from urllib.parse import urlencode
 
 import requests
@@ -13,7 +15,7 @@ from pydantic import AnyHttpUrl, parse_obj_as
 
 from models import AuthTokenData, GrantType, HttpsUrl, OpenAPIAppConfig, RedirectServer
 
-# reduce logger level to remove debug messages from console output
+# reduce log level to remove debug messages from console output
 logging.basicConfig(
     format="%(asctime)s | %(levelname)s | %(message)s", level=logging.DEBUG
 )
@@ -21,19 +23,34 @@ logging.getLogger()
 
 
 class SaxoAuthService:
-    _token_data: Optional[AuthTokenData] = None
+    _token_data: AuthTokenData | None = None
 
-    _auth_redirect_url = None
-    _auth_received_callback = None
-    _auth_code = None
-    _auth_received_state = None
-    _auth_error_message = None
-    _auth_code_verifier = None
+    _auth_redirect_url: AnyHttpUrl | None = None
+    _auth_received_callback: bool | None = None
+    _auth_code: str | None = None
+    _auth_received_state: str | None = None
+    _auth_error_message: str | None = None
+    _auth_code_verifier: bytes | None = None
 
-    def __init__(self, app_config: OpenAPIAppConfig):
-        """Create a new AuthService object with provided AppConfig."""
+    def __init__(self, app_config: OpenAPIAppConfig | None = None):
+        """Create a new AuthService object with provided AppConfig.
 
-        self._app_config = app_config
+        When initialized, config is loaded either directly from app_config argument or from "app_config.json".
+        """
+
+        if app_config:
+            logging.debug("using config directly passed from app_config argument")
+            self._app_config = app_config
+        else:
+            if os.path.isfile("app_config.json"):
+                logging.debug("found config file 'app_config.json'")
+                with open("app_config.json", "r") as config_file:
+                    config_data = json.load(config_file)
+                    self._app_config = parse_app_config(config_data)
+            else:
+                raise RuntimeError(
+                    "no app config object found - make sure 'app_config.json' is available in this directory or load the config directly when initializing SaxoAuthService"
+                )
 
     @property
     def logged_in(self) -> bool:
@@ -256,7 +273,7 @@ class SaxoAuthService:
                         "client_secret": self._app_config.client_secret,
                     }
                 )
-            elif self._app_config.grant_type is GrantType.PKCE:
+            elif self.grant_type is GrantType.PKCE:
                 token_request_params.update(
                     {
                         "code_verifier": self._auth_code_verifier,  # type: ignore[dict-item]

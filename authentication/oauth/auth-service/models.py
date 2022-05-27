@@ -47,16 +47,23 @@ class OpenAPIAppConfig(BaseModel):
     api_base_url: HttpsUrl = Field(..., alias="OpenApiBaseUrl")
     redirect_urls: List[AnyHttpUrl] = Field(..., alias="RedirectUrls")
 
-    @root_validator(pre=True)
-    def client_secret_required_for_grant_type_code(cls, values: dict) -> dict:
+    @root_validator
+    def validate_app_config(cls, values: dict) -> dict:
         if values.get("grant_type") is GrantType.CODE:
-            assert values.get(
-                "client_secret"
-            ), "client_secret required for Code grant type"
+            assert all(
+                [
+                    url.port is not None
+                    for url in values.get("redirect_urls")  # type:ignore
+                ]
+            ), "port is required for every redirect url, such as http://localhost:4321/redirect"
+
         if values.get("grant_type") is GrantType.PKCE:
-            assert (
-                values.get("client_secret") is None
-            ), "client_secret must be None for PKCE grant type"
+            print(
+                [url.port is None for url in values.get("redirect_urls")]  # type:ignore
+            )
+            assert all(
+                [url.port is None for url in values.get("redirect_urls")]  # type:ignore
+            ), "port should NOT be specified for every redirect url, such as http://localhost/redirect"
         return values
 
 

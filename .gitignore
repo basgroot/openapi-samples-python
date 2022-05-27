@@ -6,3 +6,7 @@ venv/
 
 # cache folders
 __pycache__/
+.mypy_cache
+
+# saxo OpenAPI App config file
+app_config.json
