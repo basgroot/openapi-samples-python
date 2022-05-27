@@ -1,5 +1,7 @@
 # Saxo Auth Service Sample Impementation
 
+> Note: this module uses modern type hint syntax and requires Python >= 3.10
+
 This sample features a custom class `SaxoAuthService()` which handles:
 
 - Parsing of OpenAPI App Object data and other datamodels
