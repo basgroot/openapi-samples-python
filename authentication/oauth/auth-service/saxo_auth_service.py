@@ -165,7 +165,7 @@ class SaxoAuthService:
 
         if self._auth_error_message:
             raise RuntimeError(
-                f"error occured during authentication: {self._auth_error_message}"
+                f"error occurred during authentication: {self._auth_error_message}"
             )
 
         if state != self._auth_received_state:
@@ -230,11 +230,11 @@ class SaxoAuthService:
         self.exercise_authorization()
 
     def exercise_authorization(self, auth_code: str = None) -> None:
-        """Exercizes the provided auth_code, defaults to using the refresh token."""
+        """Exercises the provided auth_code, defaults to using the refresh token."""
 
         token_request_params = {}
 
-        # auth_code is exercized
+        # auth_code is exercised
         if auth_code:
             token_request_params.update(
                 {
@@ -257,7 +257,7 @@ class SaxoAuthService:
                     }
                 )
 
-        # by deafult, use refresh token
+        # by default, use refresh token
         if not auth_code:
             token_request_params.update(
                 {
