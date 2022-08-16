@@ -5,7 +5,7 @@
 import threading
 import secrets
 import webbrowser
-import requests
+import requests  # https://requests.readthedocs.io doesn't support HTTP/2
 import logging
 
 from time import sleep
@@ -26,17 +26,16 @@ app = Flask(__name__)
 # copy your app configuration from https://www.developer.saxo/openapi/appmanagement
 # using the "Copy App Object" link on the top-right of the app page
 app_config = {
-    "AppName": ...,
     "AppKey": ...,
-    "AuthorizationEndpoint": ...,
-    "TokenEndpoint": ...,
-    "GrantType": ...,
-    "OpenApiBaseUrl": ...,
+    "AuthorizationEndpoint": "https://sim.logonvalidation.net/authorize",
+    "TokenEndpoint": "https://sim.logonvalidation.net/token",
+    "GrantType": "Code",
+    "OpenApiBaseUrl": "https://gateway.saxobank.com/sim/openapi/",
     "RedirectUrls": [...],
-    "AppSecret": ...,
+    "AppSecret": ...
 }
 
-if app_config["AppName"] is ...:
+if app_config["AppKey"] is ...:
     logging.error("looks like no app config data was pasted in - shutting down...")
     exit(-1)
 
@@ -143,7 +142,7 @@ token_request_params = {
     "code": code,
     "redirect_uri": app_config["RedirectUrls"][0],
     "client_id": app_config["AppKey"],
-    "client_secret": app_config["AppSecret"],
+    "client_secret": app_config["AppSecret"]
 }
 
 r = requests.post(app_config["TokenEndpoint"], params=token_request_params)
@@ -158,14 +157,18 @@ logging.debug(f"received token data: {token_data}")
 
 logging.debug("requesting users/me from OpenAPI...")
 
-headers = {"Authorization": f"Bearer {token_data['access_token']}"}
+headers = {
+    "Authorization": f"Bearer {token_data['access_token']}"
+}
 
 r = requests.get(app_config["OpenApiBaseUrl"] + "port/v1/users/me", headers=headers)
 
+# The X-Correlation header should be logged at every request! Only with this ID Saxo can help troubleshooting issues.
+# https://openapi.help.saxo/hc/en-us/articles/4434784593309
+x_correlation = r.headers["x-correlation"]
+
 if r.status_code != 200:
-    logging.error(
-        "error occurred querying user data from the OpenAPI - shutting down..."
-    )
+    logging.error(f"error occurred querying user data from the OpenAPI - shutting down with X-Correlation header: {x_correlation}")
 
 user_data = r.json()
 
@@ -179,7 +182,7 @@ refresh_request_params = {
     "refresh_token": token_data["refresh_token"],
     "redirect_uri": app_config["RedirectUrls"][0],
     "client_id": app_config["AppKey"],
-    "client_secret": app_config["AppSecret"],
+    "client_secret": app_config["AppSecret"]
 }
 
 r = requests.post(app_config["TokenEndpoint"], params=refresh_request_params)
